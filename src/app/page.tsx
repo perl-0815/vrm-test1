@@ -1,6 +1,5 @@
 'use client';
 
-import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
@@ -12,10 +11,7 @@ import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 export default function Home() {
   const ref = useRef<HTMLDivElement>(null);
 
-  // デバッグ用ステート
-  const [leftStick, setLeftStick] = useState({ x: 0, y: 0 });
-  const [rightStick, setRightStick] = useState({ x: 0, y: 0 });
-  const [position, setPosition] = useState({ x: 0, y: 0, z: 0 });
+  const [debugText, setDebugText] = useState('No Data');
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -105,39 +101,24 @@ export default function Home() {
       if (session) {
         const inputSources = Array.from(session.inputSources);
 
-        const leftSource = inputSources.find(src => src.handedness === 'left' && Boolean(src.gamepad));
-        const rightSource = inputSources.find(src => src.handedness === 'right' && Boolean(src.gamepad));
+        const debugLines: string[] = [];
 
-        const [lx = 0, ly = 0] = leftSource?.gamepad?.axes ?? [0, 0];
-        const [rx = 0, ry = 0] = rightSource?.gamepad?.axes ?? [0, 0];
+        for (const src of inputSources) {
+          if (src.gamepad) {
+            const axes = src.gamepad.axes.map(v => v.toFixed(2)).join(', ');
+            debugLines.push(`[${src.handedness}] axes: ${axes}`);
+          }
+        }
 
-        setLeftStick({ x: lx, y: ly });
-        setRightStick({ x: rx, y: ry });
-
-        const inputDir = new THREE.Vector3(lx, 0, ly);
-        const isMoving = inputDir.lengthSq() > 0.01;
-
-        if (isMoving) {
-          inputDir.normalize();
-          const cameraDir = new THREE.Vector3();
-          camera.getWorldDirection(cameraDir);
-          const theta = Math.atan2(cameraDir.x, cameraDir.z);
-          inputDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), theta);
-
-          const targetVelocity = inputDir.clone().multiplyScalar(0.03);
-          moveVelocity.lerp(targetVelocity, 0.2);
-          moveDirection.copy(inputDir);
+        if (debugLines.length > 0) {
+          setDebugText(debugLines.join('\n'));
         } else {
-          moveVelocity.lerp(new THREE.Vector3(0, 0, 0), 0.1);
+          setDebugText("No Input Sources");
         }
       }
 
       if (vrm) {
         vrm.scene.position.add(moveVelocity);
-
-        // UI用座標更新
-        const pos = vrm.scene.position;
-        setPosition({ x: pos.x, y: pos.y, z: pos.z });
 
         if (moveVelocity.lengthSq() > 0.0001) {
           const targetRotation = Math.atan2(moveDirection.x, moveDirection.z);
@@ -170,11 +151,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
-      </Head>
-
       <div ref={ref} />
       <div style={{
         position: 'absolute',
@@ -185,11 +161,10 @@ export default function Home() {
         padding: '10px',
         fontSize: '14px',
         fontFamily: 'monospace',
+        whiteSpace: 'pre',
         zIndex: 10,
       }}>
-        <div>左スティック: X={leftStick.x.toFixed(2)} Y={leftStick.y.toFixed(2)}</div>
-        <div>右スティック: X={rightStick.x.toFixed(2)} Y={rightStick.y.toFixed(2)}</div>
-        <div>位置: X={position.x.toFixed(2)} Y={position.y.toFixed(2)} Z={position.z.toFixed(2)}</div>
+        {debugText}
       </div>
     </>
   );
