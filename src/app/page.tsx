@@ -13,7 +13,10 @@ export default function Home() {
   const [debugText, setDebugText] = useState('No Data');
   const stickBase = useRef<THREE.Mesh | null>(null);
   const stickKnob = useRef<THREE.Mesh | null>(null);
+  const rotateBase = useRef<THREE.Mesh | null>(null);
+  const rotateKnob = useRef<THREE.Mesh | null>(null);
   const inputDir = useRef(new THREE.Vector3());
+  const rotateDir = useRef(0);
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -67,11 +70,11 @@ export default function Home() {
     const controllerFactory = new XRControllerModelFactory();
     const grip1 = renderer.xr.getControllerGrip(0);
     grip1.add(controllerFactory.createControllerModel(grip1));
-    scene.add(grip1);
+    cameraRig.add(grip1);
 
     const grip2 = renderer.xr.getControllerGrip(1);
     grip2.add(controllerFactory.createControllerModel(grip2));
-    scene.add(grip2);
+    cameraRig.add(grip2);
 
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -108,17 +111,33 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    base.position.set(-0.3, 0.8, -0.5);
-    scene.add(base);
+    base.position.set(-0.3, 0.6, -0.5);
+    cameraRig.add(base);
     stickBase.current = base;
 
     const knob = new THREE.Mesh(
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
-    knob.position.set(-0.3, 0.85, -0.5);
-    scene.add(knob);
+    knob.position.set(-0.3, 0.65, -0.5);
+    cameraRig.add(knob);
     stickKnob.current = knob;
+
+    const rbase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.1, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x333333 })
+    );
+    rbase.position.set(0.3, 0.6, -0.5);
+    cameraRig.add(rbase);
+    rotateBase.current = rbase;
+
+    const rknob = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05),
+      new THREE.MeshStandardMaterial({ color: 0x0000ff })
+    );
+    rknob.position.set(0.3, 0.65, -0.5);
+    cameraRig.add(rknob);
+    rotateKnob.current = rknob;
 
     renderer.setAnimationLoop(() => {
       const delta = 1 / 60;
@@ -141,11 +160,13 @@ export default function Home() {
         setDebugText(debugLines.join('\n'));
       }
 
-      const controller = renderer.xr.getController(0);
+      const leftController = renderer.xr.getController(0);
+      const rightController = renderer.xr.getController(1);
+
       if (stickBase.current && stickKnob.current) {
-        const distance = controller.position.distanceTo(stickKnob.current.position);
+        const distance = leftController.position.distanceTo(stickKnob.current.position);
         if (distance < 0.1) {
-          const delta = new THREE.Vector3().subVectors(controller.position, stickBase.current.position);
+          const delta = new THREE.Vector3().subVectors(leftController.position, stickBase.current.position);
           delta.y = 0;
           const len = delta.length();
           if (len > 0.01) {
@@ -159,10 +180,23 @@ export default function Home() {
         }
       }
 
+      if (rotateBase.current && rotateKnob.current) {
+        const distance = rightController.position.distanceTo(rotateKnob.current.position);
+        if (distance < 0.1) {
+          const delta = new THREE.Vector3().subVectors(rightController.position, rotateBase.current.position);
+          delta.y = 0;
+          rotateDir.current = delta.x;
+          rotateKnob.current.position.copy(rotateBase.current.position).add(delta.clone().setLength(0.05));
+        } else {
+          rotateDir.current = 0;
+          rotateKnob.current.position.lerp(rotateBase.current.position, 0.1);
+        }
+      }
+
       if (inputDir.current.lengthSq() > 0.001) {
         const cameraDir = new THREE.Vector3();
         camera.getWorldDirection(cameraDir);
-        const theta = Math.atan2(cameraDir.x, cameraDir.z);
+        const theta = Math.atan2(-cameraDir.x, -cameraDir.z);
         const dir = inputDir.current.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), theta);
         const targetVelocity = dir.multiplyScalar(0.03);
         moveVelocity.lerp(targetVelocity, 0.2);
@@ -171,9 +205,11 @@ export default function Home() {
         moveVelocity.lerp(new THREE.Vector3(0, 0, 0), 0.1);
       }
 
+      cameraRig.position.add(moveVelocity);
+      cameraRig.rotation.y -= rotateDir.current * 0.08;
+
       if (vrm) {
         vrm.scene.position.add(moveVelocity);
-        cameraRig.position.add(moveVelocity);
 
         const rightHand = vrm.humanoid?.getRawBoneNode('rightHand');
         const leftHand = vrm.humanoid?.getRawBoneNode('leftHand');
