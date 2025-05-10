@@ -71,7 +71,7 @@ export default function Home() {
       new THREE.PlaneGeometry(1, 1.6),
       mirrorMaterial
     );
-    mirrorPlane.position.set(0, 1.6, 1); // 鏡の位置（前面）
+    mirrorPlane.position.set(0, 1.6, -4); // 鏡の位置（前面）
     scene.add(mirrorPlane);
 
     // === 鏡のフレームをボックスで作成 ===
@@ -163,7 +163,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    base.position.set(-0.3, 0.8, -0.5);
+    base.position.set(-0.3, 0.9, -0.5);
     cameraRig.add(base);
     stickBase.current = base;
 
@@ -171,7 +171,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
-    knob.position.set(-0.3, 0.85, -0.5);
+    knob.position.set(-0.3, 0.95, -0.5);
     cameraRig.add(knob);
     stickKnob.current = knob;
 
@@ -179,7 +179,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    rbase.position.set(0.3, 0.8, -0.5);
+    rbase.position.set(0.3, 0.9, -0.5);
     cameraRig.add(rbase);
     rotateBase.current = rbase;
 
@@ -187,7 +187,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x0000ff })
     );
-    rknob.position.set(0.3, 0.85, -0.5);
+    rknob.position.set(0.3, 0.95, -0.5);
     cameraRig.add(rknob);
     rotateKnob.current = rknob;
 
