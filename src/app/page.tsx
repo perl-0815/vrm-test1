@@ -106,29 +106,32 @@ export default function Home() {
     });
 
     function smoothArmIK(vrm: VRM, target: THREE.Object3D, side: 'left' | 'right') {
-      const upperArm = vrm.humanoid?.getRawBoneNode(`${side}UpperArm`);
-      const lowerArm = vrm.humanoid?.getRawBoneNode(`${side}LowerArm`);
       const hand = vrm.humanoid?.getRawBoneNode(`${side}Hand`);
-
-      if (!upperArm || !lowerArm || !hand) return;
-
+      const lowerArm = vrm.humanoid?.getRawBoneNode(`${side}LowerArm`);
+      const upperArm = vrm.humanoid?.getRawBoneNode(`${side}UpperArm`);
       const shoulder = vrm.humanoid?.getRawBoneNode(`${side}Shoulder`);
 
-      // 各ボーンをターゲットに滑らかに近づける（位置＋回転）
-      const moveToward = (bone: THREE.Object3D, tgt: THREE.Object3D) => {
-        const bonePos = bone.getWorldPosition(new THREE.Vector3());
-        const tgtPos = tgt.getWorldPosition(new THREE.Vector3());
-        const delta = tgtPos.sub(bonePos).multiplyScalar(0.3);
-        bone.position.add(delta);
-        bone.quaternion.slerp(tgt.quaternion, 0.2);
+      if (!hand || !lowerArm || !upperArm) return;
+
+      // 回転だけで追従（手の回転が最優先）
+      hand.quaternion.slerp(target.quaternion, 0.4);
+
+      // 各ボーンの位置を固定距離内で追従（伸びすぎないように制限）
+      const limitMove = (bone: THREE.Object3D, tgt: THREE.Object3D, maxDist = 0.1) => {
+        const cur = bone.getWorldPosition(new THREE.Vector3());
+        const dst = tgt.getWorldPosition(new THREE.Vector3());
+        const delta = dst.sub(cur);
+        if (delta.length() > maxDist) {
+          delta.setLength(maxDist); // 最大移動距離を制限
+        }
+        bone.position.add(delta.multiplyScalar(0.3));
         bone.updateMatrixWorld();
       };
 
-      // 全体を滑らかに追従
-      moveToward(hand, target);
-      moveToward(lowerArm, hand);
-      moveToward(upperArm, lowerArm);
-      if (shoulder) moveToward(shoulder, upperArm);
+      limitMove(hand, target, 0.15);       // 手の距離を制限
+      limitMove(lowerArm, hand, 0.15);     // 前腕を手に寄せる
+      limitMove(upperArm, lowerArm, 0.15); // 上腕を前腕に寄せる
+      if (shoulder) limitMove(shoulder, upperArm, 0.05); // 肩は動きすぎないように
     }
 
     const moveVelocity = new THREE.Vector3();
