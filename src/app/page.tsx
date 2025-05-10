@@ -60,6 +60,58 @@ export default function Home() {
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
+    // === ミラー用のレンダーターゲットとカメラ ===
+    const mirrorRenderTarget = new THREE.WebGLRenderTarget(512, 512);
+    const mirrorCamera = new THREE.PerspectiveCamera(70, 1, 0.1, 1000);
+    mirrorCamera.rotation.y = Math.PI; // 正面に映るように反転
+
+    // === ミラー板の作成 ===
+    const mirrorMaterial = new THREE.MeshBasicMaterial({ map: mirrorRenderTarget.texture });
+    const mirrorPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1.6),
+      mirrorMaterial
+    );
+    mirrorPlane.position.set(0, 1.6, 1); // 鏡の位置（前面）
+    scene.add(mirrorPlane);
+
+    // === 鏡のフレームをボックスで作成 ===
+    const frameMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    const frameThickness = 0.02;
+    const width = 1, height = 1.6;
+
+    // 上
+    const frameTop = new THREE.Mesh(
+      new THREE.BoxGeometry(width + frameThickness * 2, frameThickness, frameThickness),
+      frameMaterial
+    );
+    frameTop.position.set(0, 1.6 + height / 2 + frameThickness / 2, 1);
+    scene.add(frameTop);
+
+    // 下
+    const frameBottom = new THREE.Mesh(
+      new THREE.BoxGeometry(width + frameThickness * 2, frameThickness, frameThickness),
+      frameMaterial
+    );
+    frameBottom.position.set(0, 1.6 - height / 2 - frameThickness / 2, 1);
+    scene.add(frameBottom);
+
+    // 左
+    const frameLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, height + frameThickness * 2, frameThickness),
+      frameMaterial
+    );
+    frameLeft.position.set(-width / 2 - frameThickness / 2, 1.6, 1);
+    scene.add(frameLeft);
+
+    // 右
+    const frameRight = new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, height + frameThickness * 2, frameThickness),
+      frameMaterial
+    );
+    frameRight.position.set(width / 2 + frameThickness / 2, 1.6, 1);
+    scene.add(frameRight);
+    //======================================================
+
     const cube = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
@@ -225,6 +277,18 @@ export default function Home() {
         }
 
         vrm.update(delta);
+      }
+
+      // ミラーの反射用描画（アバターを映す）
+      if (vrm) {
+        const mirrorPos = vrm.scene.position.clone();
+        mirrorPos.z += 2;
+        mirrorCamera.position.copy(mirrorPos);
+        mirrorCamera.lookAt(vrm.scene.position);
+
+        renderer.setRenderTarget(mirrorRenderTarget);
+        renderer.render(scene, mirrorCamera);
+        renderer.setRenderTarget(null); // メイン描画へ
       }
 
       renderer.render(scene, camera);
