@@ -74,7 +74,7 @@ export default function Home() {
     mirrorPlane.position.set(0, 1.6, -2); // 鏡の位置（前面）
     scene.add(mirrorPlane);
 
-    /*
+    /*デバッグ用の赤い箱
     const cube = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
