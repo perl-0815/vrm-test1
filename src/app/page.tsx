@@ -105,19 +105,20 @@ export default function Home() {
       }
     });
 
-    function simpleIK(bone: THREE.Object3D, target: THREE.Object3D, chainLength = 3) {
+    function simpleIK(bone: THREE.Object3D, target: THREE.Object3D, chainLength = 2) {
       let current: THREE.Object3D | null = bone;
       for (let i = 0; i < chainLength; i++) {
         if (!current?.parent) break;
-        const toTarget = new THREE.Vector3().subVectors(
-          target.position,
-          current.getWorldPosition(new THREE.Vector3())
-        );
-        toTarget.normalize().multiplyScalar(0.05);
-        current.position.add(toTarget);
+        const currentPos = current.getWorldPosition(new THREE.Vector3());
+        const targetPos = target.getWorldPosition(new THREE.Vector3());
+
+        const delta = new THREE.Vector3().subVectors(targetPos, currentPos).multiplyScalar(0.3); // 柔らかく追従
+        current.position.add(delta);
         current.updateMatrixWorld();
         current = current.parent;
       }
+
+      bone.quaternion.slerp(target.quaternion, 0.2);
     }
 
     const moveVelocity = new THREE.Vector3();
