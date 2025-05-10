@@ -71,53 +71,17 @@ export default function Home() {
       new THREE.PlaneGeometry(1, 1.6),
       mirrorMaterial
     );
-    mirrorPlane.position.set(0, 1.6, -4); // 鏡の位置（前面）
+    mirrorPlane.position.set(0, 1.6, -2); // 鏡の位置（前面）
     scene.add(mirrorPlane);
 
-    // === 鏡のフレームをボックスで作成 ===
-    const frameMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 });
-    const frameThickness = 0.02;
-    const width = 1, height = 1.6;
-
-    // 上
-    const frameTop = new THREE.Mesh(
-      new THREE.BoxGeometry(width + frameThickness * 2, frameThickness, frameThickness),
-      frameMaterial
-    );
-    frameTop.position.set(0, 1.6 + height / 2 + frameThickness / 2, 1);
-    scene.add(frameTop);
-
-    // 下
-    const frameBottom = new THREE.Mesh(
-      new THREE.BoxGeometry(width + frameThickness * 2, frameThickness, frameThickness),
-      frameMaterial
-    );
-    frameBottom.position.set(0, 1.6 - height / 2 - frameThickness / 2, 1);
-    scene.add(frameBottom);
-
-    // 左
-    const frameLeft = new THREE.Mesh(
-      new THREE.BoxGeometry(frameThickness, height + frameThickness * 2, frameThickness),
-      frameMaterial
-    );
-    frameLeft.position.set(-width / 2 - frameThickness / 2, 1.6, 1);
-    scene.add(frameLeft);
-
-    // 右
-    const frameRight = new THREE.Mesh(
-      new THREE.BoxGeometry(frameThickness, height + frameThickness * 2, frameThickness),
-      frameMaterial
-    );
-    frameRight.position.set(width / 2 + frameThickness / 2, 1.6, 1);
-    scene.add(frameRight);
-    //======================================================
-
+    /*
     const cube = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
     );
     cube.position.set(0, 0.5, -3);
     scene.add(cube);
+    */
 
     const controllerFactory = new XRControllerModelFactory();
     const grip1 = renderer.xr.getControllerGrip(0);
@@ -282,6 +246,8 @@ export default function Home() {
       // ミラーの反射用描画（アバターを映す）
       // WebXRのリアル視点に基づいたミラー反映に修正
       if (vrm) {
+        mirrorPlane.visible = false;
+
         const mirrorTarget = vrm.scene.position.clone();
         const mirrorCamOffset = new THREE.Vector3(0, 0, 2);
         mirrorTarget.add(mirrorCamOffset);
@@ -292,6 +258,8 @@ export default function Home() {
         renderer.setRenderTarget(mirrorRenderTarget);
         renderer.render(scene, mirrorCamera);
         renderer.setRenderTarget(null);
+
+        mirrorPlane.visible = true;
       }
 
       renderer.render(scene, camera);
