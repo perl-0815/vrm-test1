@@ -58,28 +58,12 @@ export default function Home() {
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    // === ミラー用のレンダーターゲットとカメラ ===
-    const mirrorRenderTarget = new THREE.WebGLRenderTarget(512, 512);
-    const mirrorCamera = new THREE.PerspectiveCamera(70, 1, 0.1, 1000);
-    mirrorCamera.rotation.y = Math.PI; // 正面に映るように反転
-
-    // === ミラー板の作成 ===
-    const mirrorMaterial = new THREE.MeshBasicMaterial({ map: mirrorRenderTarget.texture });
-    const mirrorPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1.6),
-      mirrorMaterial
-    );
-    mirrorPlane.position.set(0, 1.6, -2); // 鏡の位置（前面）
-    scene.add(mirrorPlane);
-
-    /*デバッグ用の赤い箱
     const cube = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
     );
     cube.position.set(0, 0.5, -3);
     scene.add(cube);
-    */
 
     const controllerFactory = new XRControllerModelFactory();
     const grip1 = renderer.xr.getControllerGrip(0);
@@ -89,21 +73,6 @@ export default function Home() {
     const grip2 = renderer.xr.getControllerGrip(1);
     grip2.add(controllerFactory.createControllerModel(grip2));
     cameraRig.add(grip2);
-
-    /*
-    const loader = new GLTFLoader();
-    loader.register((parser) => new VRMLoaderPlugin(parser));
-
-    let vrm: VRM | null = null;
-
-    loader.load('/vrm/AliciaSolid.vrm', (gltf) => {
-      vrm = gltf.userData.vrm;
-      if (vrm) {
-        vrm.scene.position.set(0, 0, 0); // ←ここで位置を調整
-        cameraRig.add(vrm.scene);           // ← cameraRig に追加するのが大事！
-      }
-    });
-    */
 
     function simpleIK(bone: THREE.Object3D, target: THREE.Object3D, chainLength = 3) {
       let current: THREE.Object3D | null = bone;
@@ -127,7 +96,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    base.position.set(-0.3, 0.9, -0.5);
+    base.position.set(-0.3, 0.6, -0.5);
     cameraRig.add(base);
     stickBase.current = base;
 
@@ -135,7 +104,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
-    knob.position.set(-0.3, 0.95, -0.5);
+    knob.position.set(-0.3, 0.65, -0.5);
     cameraRig.add(knob);
     stickKnob.current = knob;
 
@@ -143,7 +112,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    rbase.position.set(0.3, 0.9, -0.5);
+    rbase.position.set(0.3, 0.6, -0.5);
     cameraRig.add(rbase);
     rotateBase.current = rbase;
 
@@ -151,7 +120,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x0000ff })
     );
-    rknob.position.set(0.3, 0.95, -0.5);
+    rknob.position.set(0.3, 0.65, -0.5);
     cameraRig.add(rknob);
     rotateKnob.current = rknob;
 
