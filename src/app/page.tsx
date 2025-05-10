@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { VRM, VRMLoaderPlugin } from '@pixiv/three-vrm';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
 export default function Home() {
@@ -92,6 +90,7 @@ export default function Home() {
     grip2.add(controllerFactory.createControllerModel(grip2));
     cameraRig.add(grip2);
 
+    /*
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
 
@@ -104,6 +103,7 @@ export default function Home() {
         cameraRig.add(vrm.scene);           // ← cameraRig に追加するのが大事！
       }
     });
+    */
 
     function simpleIK(bone: THREE.Object3D, target: THREE.Object3D, chainLength = 3) {
       let current: THREE.Object3D | null = bone;
@@ -223,44 +223,6 @@ export default function Home() {
 
       cameraRig.position.add(moveVelocity);
       cameraRig.rotation.y -= rotateDir.current * 0.08;
-
-      if (vrm) {
-        vrm.scene.position.add(moveVelocity);
-
-        const rightHand = vrm.humanoid?.getRawBoneNode('rightHand');
-        const leftHand = vrm.humanoid?.getRawBoneNode('leftHand');
-
-        if (rightHand) {
-          simpleIK(rightHand, grip1);
-          rightHand.quaternion.copy(grip1.quaternion);
-        }
-
-        if (leftHand) {
-          simpleIK(leftHand, grip2);
-          leftHand.quaternion.copy(grip2.quaternion);
-        }
-
-        vrm.update(delta);
-      }
-
-      // ミラーの反射用描画（アバターを映す）
-      // WebXRのリアル視点に基づいたミラー反映に修正
-      if (vrm) {
-        mirrorPlane.visible = false;
-
-        const mirrorTarget = vrm.scene.position.clone();
-        const mirrorCamOffset = new THREE.Vector3(0, 0, 2);
-        mirrorTarget.add(mirrorCamOffset);
-
-        mirrorCamera.position.copy(vrm.scene.position.clone().add(new THREE.Vector3(0, 1.6, 2))); // 目線と高さを揃えるとより自然
-        mirrorCamera.lookAt(vrm.scene.position);
-
-        renderer.setRenderTarget(mirrorRenderTarget);
-        renderer.render(scene, mirrorCamera);
-        renderer.setRenderTarget(null);
-
-        mirrorPlane.visible = true;
-      }
 
       renderer.render(scene, camera);
     });
