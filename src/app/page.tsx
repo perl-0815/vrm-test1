@@ -163,7 +163,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    base.position.set(-0.3, 0.6, -0.5);
+    base.position.set(-0.3, 0.8, -0.5);
     cameraRig.add(base);
     stickBase.current = base;
 
@@ -171,7 +171,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
-    knob.position.set(-0.3, 0.65, -0.5);
+    knob.position.set(-0.3, 0.85, -0.5);
     cameraRig.add(knob);
     stickKnob.current = knob;
 
@@ -179,7 +179,7 @@ export default function Home() {
       new THREE.CylinderGeometry(0.1, 0.1, 0.02),
       new THREE.MeshStandardMaterial({ color: 0x333333 })
     );
-    rbase.position.set(0.3, 0.6, -0.5);
+    rbase.position.set(0.3, 0.8, -0.5);
     cameraRig.add(rbase);
     rotateBase.current = rbase;
 
@@ -187,7 +187,7 @@ export default function Home() {
       new THREE.SphereGeometry(0.05),
       new THREE.MeshStandardMaterial({ color: 0x0000ff })
     );
-    rknob.position.set(0.3, 0.65, -0.5);
+    rknob.position.set(0.3, 0.85, -0.5);
     cameraRig.add(rknob);
     rotateKnob.current = rknob;
 
@@ -280,15 +280,18 @@ export default function Home() {
       }
 
       // ミラーの反射用描画（アバターを映す）
+      // WebXRのリアル視点に基づいたミラー反映に修正
       if (vrm) {
-        const mirrorPos = vrm.scene.position.clone();
-        mirrorPos.z += 2;
-        mirrorCamera.position.copy(mirrorPos);
+        const mirrorTarget = vrm.scene.position.clone();
+        const mirrorCamOffset = new THREE.Vector3(0, 0, 2);
+        mirrorTarget.add(mirrorCamOffset);
+
+        mirrorCamera.position.copy(vrm.scene.position.clone().add(new THREE.Vector3(0, 1.6, 2))); // 目線と高さを揃えるとより自然
         mirrorCamera.lookAt(vrm.scene.position);
 
         renderer.setRenderTarget(mirrorRenderTarget);
         renderer.render(scene, mirrorCamera);
-        renderer.setRenderTarget(null); // メイン描画へ
+        renderer.setRenderTarget(null);
       }
 
       renderer.render(scene, camera);
