@@ -105,20 +105,30 @@ export default function Home() {
       }
     });
 
-    function simpleIK(bone: THREE.Object3D, target: THREE.Object3D, chainLength = 2) {
-      let current: THREE.Object3D | null = bone;
-      for (let i = 0; i < chainLength; i++) {
-        if (!current?.parent) break;
-        const currentPos = current.getWorldPosition(new THREE.Vector3());
-        const targetPos = target.getWorldPosition(new THREE.Vector3());
+    function smoothArmIK(vrm: VRM, target: THREE.Object3D, side: 'left' | 'right') {
+      const upperArm = vrm.humanoid?.getRawBoneNode(`${side}UpperArm`);
+      const lowerArm = vrm.humanoid?.getRawBoneNode(`${side}LowerArm`);
+      const hand = vrm.humanoid?.getRawBoneNode(`${side}Hand`);
 
-        const delta = new THREE.Vector3().subVectors(targetPos, currentPos).multiplyScalar(0.3); // 柔らかく追従
-        current.position.add(delta);
-        current.updateMatrixWorld();
-        current = current.parent;
-      }
+      if (!upperArm || !lowerArm || !hand) return;
 
-      bone.quaternion.slerp(target.quaternion, 0.2);
+      const shoulder = vrm.humanoid?.getRawBoneNode(`${side}Shoulder`);
+
+      // 各ボーンをターゲットに滑らかに近づける（位置＋回転）
+      const moveToward = (bone: THREE.Object3D, tgt: THREE.Object3D) => {
+        const bonePos = bone.getWorldPosition(new THREE.Vector3());
+        const tgtPos = tgt.getWorldPosition(new THREE.Vector3());
+        const delta = tgtPos.sub(bonePos).multiplyScalar(0.3);
+        bone.position.add(delta);
+        bone.quaternion.slerp(tgt.quaternion, 0.2);
+        bone.updateMatrixWorld();
+      };
+
+      // 全体を滑らかに追従
+      moveToward(hand, target);
+      moveToward(lowerArm, hand);
+      moveToward(upperArm, lowerArm);
+      if (shoulder) moveToward(shoulder, upperArm);
     }
 
     const moveVelocity = new THREE.Vector3();
@@ -232,12 +242,12 @@ export default function Home() {
         const leftHand = vrm.humanoid?.getRawBoneNode('leftHand');
 
         if (rightHand) {
-          simpleIK(rightHand, grip1);
+          smoothArmIK(vrm, grip1, 'right');
           rightHand.quaternion.copy(grip1.quaternion);
         }
 
         if (leftHand) {
-          simpleIK(leftHand, grip2);
+          smoothArmIK(vrm, grip2, 'left');
           leftHand.quaternion.copy(grip2.quaternion);
         }
 
