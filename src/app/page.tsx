@@ -100,8 +100,8 @@ export default function Home() {
     loader.load('/vrm/AliciaSolid.vrm', (gltf) => {
       vrm = gltf.userData.vrm;
       if (vrm) {
-        vrm.scene.position.y = -1.6;
-        scene.add(vrm.scene);
+        vrm.scene.position.set(0, -1.6, -1); // ←ここで位置を調整
+        cameraRig.add(vrm.scene);           // ← cameraRig に追加するのが大事！
       }
     });
 
